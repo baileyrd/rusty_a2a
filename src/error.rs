@@ -157,6 +157,50 @@ impl A2aError {
         }
     }
 
+    /// Reconstructs an error from a `google.rpc.ErrorInfo.reason` and the
+    /// accompanying message — the inverse of [`A2aError::reason`], for a
+    /// client reading a REST or gRPC error body.
+    ///
+    /// An unrecognized reason becomes [`A2aError::Internal`] carrying the
+    /// remote's message: a peer on a later spec revision may name an error
+    /// this build has never heard of, and inventing a closer-looking variant
+    /// would misreport it.
+    pub fn from_reason(reason: &str, message: impl Into<String>) -> Self {
+        let message = message.into();
+        match reason {
+            "TASK_NOT_FOUND" => A2aError::TaskNotFound(message),
+            "TASK_NOT_CANCELABLE" => A2aError::TaskNotCancelable(message),
+            "PUSH_NOTIFICATION_NOT_SUPPORTED" => A2aError::PushNotificationNotSupported,
+            "UNSUPPORTED_OPERATION" => A2aError::UnsupportedOperation(message),
+            "CONTENT_TYPE_NOT_SUPPORTED" => A2aError::ContentTypeNotSupported(message),
+            "INVALID_AGENT_RESPONSE" => A2aError::InvalidAgentResponse(message),
+            "EXTENDED_AGENT_CARD_NOT_CONFIGURED" => A2aError::ExtendedAgentCardNotConfigured,
+            "EXTENSION_SUPPORT_REQUIRED" => A2aError::ExtensionSupportRequired(message),
+            "VERSION_NOT_SUPPORTED" => A2aError::VersionNotSupported(message),
+            _ => A2aError::Internal(message),
+        }
+    }
+
+    /// Reconstructs an error from a gRPC status code name and message, for a
+    /// client with no `ErrorInfo` detail to read.
+    ///
+    /// Several A2A errors share a status code — `FAILED_PRECONDITION` covers
+    /// five of them — so this is necessarily lossy and picks the generic
+    /// variant for each category. Prefer [`A2aError::from_reason`] wherever
+    /// the richer detail is available.
+    pub fn from_grpc_status_name(name: &str, message: impl Into<String>) -> Self {
+        let message = message.into();
+        match name {
+            "NOT_FOUND" => A2aError::TaskNotFound(message),
+            "FAILED_PRECONDITION" => A2aError::UnsupportedOperation(message),
+            "INVALID_ARGUMENT" => A2aError::InvalidParams(message),
+            "UNAUTHENTICATED" => A2aError::Unauthenticated(message),
+            "PERMISSION_DENIED" => A2aError::PermissionDenied(message),
+            "UNIMPLEMENTED" => A2aError::MethodNotFound(message),
+            _ => A2aError::Internal(message),
+        }
+    }
+
     /// The canonical gRPC status code name for this error, per spec
     /// Section 5.4's "gRPC Status" column for the nine A2A-specific
     /// errors. For the remaining variants, the spec only gives examples

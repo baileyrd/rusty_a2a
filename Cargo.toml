@@ -82,6 +82,7 @@ full = ["client", "server", "signing", "grpc"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
+axum = "0.7"
 
 [[example]]
 name = "echo_server"
@@ -103,6 +104,17 @@ name = "wire_format"
 path = "tests/wire_format.rs"
 # Deliberately no `required-features`: the data model is always compiled, and
 # its JSON encoding is what every binding and every peer SDK shares.
+
+[[test]]
+name = "rest_client"
+path = "tests/rest_client.rs"
+required-features = ["client", "server"]
+
+[[test]]
+name = "grpc_client"
+path = "tests/grpc_client.rs"
+# The gRPC service lives under `server`, which `grpc` does not itself enable.
+required-features = ["grpc", "client", "server"]
 
 [[test]]
 name = "integration"

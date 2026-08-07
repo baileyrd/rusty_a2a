@@ -103,6 +103,11 @@ jobs:
       - name: gRPC and server, no client
         run: cargo check --features grpc,server --all-targets
 
+      # The generated types live outside `server` so a gRPC client does not
+      # have to enable it; this is what keeps that true.
+      - name: gRPC and client, no server
+        run: cargo check --features grpc,client --all-targets
+
       # A `required-features` gate that asks for MORE than its target needs
       # is invisible to compilation: cargo silently drops the target and the
       # suite reports success by not existing. Naming each suite under the
@@ -111,6 +116,8 @@ jobs:
         run: |
           cargo test --test wire_format -- --list
           cargo test --features client,server --test integration -- --list
+          cargo test --features client,server --test rest_client -- --list
+          cargo test --features grpc,client,server --test grpc_client -- --list
           cargo test --features client,server --test security_and_push_notifications -- --list
           cargo test --features client,server --test history_length_and_extensions -- --list
           cargo test --features grpc,server --test grpc_integration -- --list

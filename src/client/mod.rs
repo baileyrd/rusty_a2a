@@ -1,5 +1,11 @@
-//! An async client for calling A2A agents over the JSON-RPC 2.0 protocol
-//! binding (spec Section 9), including SSE streaming.
+//! Async clients for calling A2A agents.
+//!
+//! One type per protocol binding, each covering the same eleven operations:
+//! [`A2aClient`] for JSON-RPC 2.0 (spec Section 9), [`RestClient`] for
+//! HTTP+JSON/REST (Section 11), and [`GrpcClient`] for gRPC (Section 10,
+//! feature `grpc`). An agent declares which bindings it serves in its
+//! `AgentCard`, and each client's `from_agent_card` picks the matching
+//! interface — so the choice is the caller's, over whatever the agent offers.
 //!
 //! ```no_run
 //! # async fn run() -> rusty_a2a::client::Result<()> {
@@ -12,6 +18,14 @@
 //! # Ok(())
 //! # }
 //! ```
+#[cfg(feature = "grpc")]
+pub mod grpc;
+pub mod rest;
+
+#[cfg(feature = "grpc")]
+pub use grpc::GrpcClient;
+pub use rest::RestClient;
+
 use std::pin::Pin;
 use std::sync::atomic::{AtomicI64, Ordering};
 
@@ -47,6 +61,8 @@ pub enum ClientError {
     Stream(String),
     #[error("agent card declares no JSONRPC interface")]
     NoJsonRpcInterface,
+    #[error("agent card declares no HTTP+JSON interface")]
+    NoRestInterface,
     #[error("unexpected response (HTTP {status}): {body}")]
     UnexpectedResponse { status: u16, body: String },
 }

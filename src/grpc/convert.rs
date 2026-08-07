@@ -14,13 +14,19 @@
 
 use chrono::{DateTime, TimeZone, Utc};
 use serde_json::{Map, Value};
-use tonic::{Code, Status};
+use tonic::Status;
 
+// `Code` and `A2aError` are only needed by the server's error mapping.
+#[cfg(feature = "server")]
 use crate::error::A2aError;
+#[cfg(feature = "server")]
+use tonic::Code;
+
 use crate::types as ours;
 
 use super::pb;
 
+#[cfg(feature = "server")]
 pub fn a2a_error_to_status(err: A2aError) -> Status {
     let code = match err.grpc_status_name() {
         "NOT_FOUND" => Code::NotFound,
@@ -214,6 +220,7 @@ fn our_message_to_pb(m: ours::Message) -> pb::Message {
 
 // --- TaskStatus / Task / Artifact / events ---
 
+#[cfg(feature = "server")]
 fn our_task_status_to_pb(s: ours::TaskStatus) -> pb::TaskStatus {
     pb::TaskStatus {
         state: our_task_state_to_pb(s.state) as i32,
@@ -222,6 +229,7 @@ fn our_task_status_to_pb(s: ours::TaskStatus) -> pb::TaskStatus {
     }
 }
 
+#[cfg(feature = "server")]
 fn our_artifact_to_pb(a: ours::Artifact) -> pb::Artifact {
     pb::Artifact {
         artifact_id: a.artifact_id,
@@ -233,6 +241,7 @@ fn our_artifact_to_pb(a: ours::Artifact) -> pb::Artifact {
     }
 }
 
+#[cfg(feature = "server")]
 pub fn our_task_to_pb(t: ours::Task) -> pb::Task {
     pb::Task {
         id: t.id,
@@ -244,6 +253,7 @@ pub fn our_task_to_pb(t: ours::Task) -> pb::Task {
     }
 }
 
+#[cfg(feature = "server")]
 fn our_status_update_to_pb(e: ours::TaskStatusUpdateEvent) -> pb::TaskStatusUpdateEvent {
     pb::TaskStatusUpdateEvent {
         task_id: e.task_id,
@@ -253,6 +263,7 @@ fn our_status_update_to_pb(e: ours::TaskStatusUpdateEvent) -> pb::TaskStatusUpda
     }
 }
 
+#[cfg(feature = "server")]
 fn our_artifact_update_to_pb(e: ours::TaskArtifactUpdateEvent) -> pb::TaskArtifactUpdateEvent {
     pb::TaskArtifactUpdateEvent {
         task_id: e.task_id,
@@ -264,6 +275,7 @@ fn our_artifact_update_to_pb(e: ours::TaskArtifactUpdateEvent) -> pb::TaskArtifa
     }
 }
 
+#[cfg(feature = "server")]
 pub fn our_stream_response_to_pb(r: ours::StreamResponse) -> pb::StreamResponse {
     use pb::stream_response::Payload;
     let payload = Some(match r {
@@ -279,6 +291,7 @@ pub fn our_stream_response_to_pb(r: ours::StreamResponse) -> pb::StreamResponse 
     pb::StreamResponse { payload }
 }
 
+#[cfg(feature = "server")]
 pub fn our_send_result_to_pb(r: ours::SendMessageResult) -> pb::SendMessageResponse {
     use pb::send_message_response::Payload;
     let payload = Some(match r {
@@ -326,6 +339,7 @@ pub fn our_push_config_to_pb(c: ours::TaskPushNotificationConfig) -> pb::TaskPus
     }
 }
 
+#[cfg(feature = "server")]
 pub fn our_list_push_notification_configs_response_to_pb(
     r: ours::ListTaskPushNotificationConfigsResponse,
 ) -> pb::ListTaskPushNotificationConfigsResponse {
@@ -335,6 +349,7 @@ pub fn our_list_push_notification_configs_response_to_pb(
     }
 }
 
+#[cfg(feature = "server")]
 pub fn our_list_tasks_response_to_pb(r: ours::ListTasksResponse) -> pb::ListTasksResponse {
     pb::ListTasksResponse {
         tasks: r.tasks.into_iter().map(our_task_to_pb).collect(),
@@ -346,6 +361,7 @@ pub fn our_list_tasks_response_to_pb(r: ours::ListTasksResponse) -> pb::ListTask
 
 // --- requests (inbound only) ---
 
+#[cfg(feature = "server")]
 fn pb_send_config_to_ours(c: pb::SendMessageConfiguration) -> ours::SendMessageConfiguration {
     ours::SendMessageConfiguration {
         accepted_output_modes: c.accepted_output_modes,
@@ -355,6 +371,7 @@ fn pb_send_config_to_ours(c: pb::SendMessageConfiguration) -> ours::SendMessageC
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_send_message_request_to_ours(
     r: pb::SendMessageRequest,
 ) -> Result<ours::SendMessageRequest, Status> {
@@ -369,6 +386,7 @@ pub fn pb_send_message_request_to_ours(
     })
 }
 
+#[cfg(feature = "server")]
 pub fn pb_get_task_request_to_ours(r: pb::GetTaskRequest) -> ours::GetTaskRequest {
     ours::GetTaskRequest {
         tenant: non_empty(r.tenant),
@@ -377,6 +395,7 @@ pub fn pb_get_task_request_to_ours(r: pb::GetTaskRequest) -> ours::GetTaskReques
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_list_tasks_request_to_ours(r: pb::ListTasksRequest) -> ours::ListTasksRequest {
     ours::ListTasksRequest {
         tenant: non_empty(r.tenant),
@@ -394,6 +413,7 @@ pub fn pb_list_tasks_request_to_ours(r: pb::ListTasksRequest) -> ours::ListTasks
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_cancel_task_request_to_ours(r: pb::CancelTaskRequest) -> ours::CancelTaskRequest {
     ours::CancelTaskRequest {
         tenant: non_empty(r.tenant),
@@ -402,6 +422,7 @@ pub fn pb_cancel_task_request_to_ours(r: pb::CancelTaskRequest) -> ours::CancelT
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_subscribe_to_task_request_to_ours(r: pb::SubscribeToTaskRequest) -> ours::SubscribeToTaskRequest {
     ours::SubscribeToTaskRequest {
         tenant: non_empty(r.tenant),
@@ -409,6 +430,7 @@ pub fn pb_subscribe_to_task_request_to_ours(r: pb::SubscribeToTaskRequest) -> ou
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_get_push_notification_config_request_to_ours(
     r: pb::GetTaskPushNotificationConfigRequest,
 ) -> ours::GetTaskPushNotificationConfigRequest {
@@ -419,6 +441,7 @@ pub fn pb_get_push_notification_config_request_to_ours(
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_delete_push_notification_config_request_to_ours(
     r: pb::DeleteTaskPushNotificationConfigRequest,
 ) -> ours::DeleteTaskPushNotificationConfigRequest {
@@ -429,6 +452,7 @@ pub fn pb_delete_push_notification_config_request_to_ours(
     }
 }
 
+#[cfg(feature = "server")]
 pub fn pb_list_push_notification_configs_request_to_ours(
     r: pb::ListTaskPushNotificationConfigsRequest,
 ) -> ours::ListTaskPushNotificationConfigsRequest {
@@ -442,6 +466,7 @@ pub fn pb_list_push_notification_configs_request_to_ours(
 
 // --- AgentCard (outbound only, for GetExtendedAgentCard) ---
 
+#[cfg(feature = "server")]
 fn our_agent_interface_to_pb(i: ours::AgentInterface) -> pb::AgentInterface {
     pb::AgentInterface {
         url: i.url,
@@ -451,6 +476,7 @@ fn our_agent_interface_to_pb(i: ours::AgentInterface) -> pb::AgentInterface {
     }
 }
 
+#[cfg(feature = "server")]
 fn our_agent_provider_to_pb(p: ours::AgentProvider) -> pb::AgentProvider {
     pb::AgentProvider {
         url: p.url,
@@ -458,6 +484,7 @@ fn our_agent_provider_to_pb(p: ours::AgentProvider) -> pb::AgentProvider {
     }
 }
 
+#[cfg(feature = "server")]
 fn our_agent_extension_to_pb(e: ours::AgentExtension) -> pb::AgentExtension {
     pb::AgentExtension {
         uri: e.uri,
@@ -467,6 +494,7 @@ fn our_agent_extension_to_pb(e: ours::AgentExtension) -> pb::AgentExtension {
     }
 }
 
+#[cfg(feature = "server")]
 fn our_agent_capabilities_to_pb(c: ours::AgentCapabilities) -> pb::AgentCapabilities {
     pb::AgentCapabilities {
         streaming: c.streaming,
@@ -476,10 +504,12 @@ fn our_agent_capabilities_to_pb(c: ours::AgentCapabilities) -> pb::AgentCapabili
     }
 }
 
+#[cfg(feature = "server")]
 fn our_string_list_to_pb(s: ours::StringList) -> pb::StringList {
     pb::StringList { list: s.list }
 }
 
+#[cfg(feature = "server")]
 fn our_security_requirement_to_pb(s: ours::SecurityRequirement) -> pb::SecurityRequirement {
     pb::SecurityRequirement {
         schemes: s
@@ -490,6 +520,7 @@ fn our_security_requirement_to_pb(s: ours::SecurityRequirement) -> pb::SecurityR
     }
 }
 
+#[cfg(feature = "server")]
 fn our_agent_skill_to_pb(s: ours::AgentSkill) -> pb::AgentSkill {
     pb::AgentSkill {
         id: s.id,
@@ -507,6 +538,7 @@ fn our_agent_skill_to_pb(s: ours::AgentSkill) -> pb::AgentSkill {
     }
 }
 
+#[cfg(feature = "server")]
 fn our_agent_card_signature_to_pb(s: ours::AgentCardSignature) -> pb::AgentCardSignature {
     pb::AgentCardSignature {
         protected: s.protected,
@@ -515,6 +547,7 @@ fn our_agent_card_signature_to_pb(s: ours::AgentCardSignature) -> pb::AgentCardS
     }
 }
 
+#[cfg(feature = "server")]
 fn our_api_key_scheme_to_pb(s: ours::ApiKeySecurityScheme) -> pb::ApiKeySecurityScheme {
     pb::ApiKeySecurityScheme {
         description: s.description.unwrap_or_default(),
@@ -523,6 +556,7 @@ fn our_api_key_scheme_to_pb(s: ours::ApiKeySecurityScheme) -> pb::ApiKeySecurity
     }
 }
 
+#[cfg(feature = "server")]
 fn our_http_auth_scheme_to_pb(s: ours::HttpAuthSecurityScheme) -> pb::HttpAuthSecurityScheme {
     pb::HttpAuthSecurityScheme {
         description: s.description.unwrap_or_default(),
@@ -531,6 +565,7 @@ fn our_http_auth_scheme_to_pb(s: ours::HttpAuthSecurityScheme) -> pb::HttpAuthSe
     }
 }
 
+#[cfg(feature = "server")]
 fn our_oidc_scheme_to_pb(s: ours::OpenIdConnectSecurityScheme) -> pb::OpenIdConnectSecurityScheme {
     pb::OpenIdConnectSecurityScheme {
         description: s.description.unwrap_or_default(),
@@ -538,12 +573,14 @@ fn our_oidc_scheme_to_pb(s: ours::OpenIdConnectSecurityScheme) -> pb::OpenIdConn
     }
 }
 
+#[cfg(feature = "server")]
 fn our_mtls_scheme_to_pb(s: ours::MutualTlsSecurityScheme) -> pb::MutualTlsSecurityScheme {
     pb::MutualTlsSecurityScheme {
         description: s.description.unwrap_or_default(),
     }
 }
 
+#[cfg(feature = "server")]
 fn our_auth_code_flow_to_pb(f: ours::AuthorizationCodeOAuthFlow) -> pb::AuthorizationCodeOAuthFlow {
     pb::AuthorizationCodeOAuthFlow {
         authorization_url: f.authorization_url,
@@ -554,6 +591,7 @@ fn our_auth_code_flow_to_pb(f: ours::AuthorizationCodeOAuthFlow) -> pb::Authoriz
     }
 }
 
+#[cfg(feature = "server")]
 fn our_client_creds_flow_to_pb(f: ours::ClientCredentialsOAuthFlow) -> pb::ClientCredentialsOAuthFlow {
     pb::ClientCredentialsOAuthFlow {
         token_url: f.token_url,
@@ -562,6 +600,7 @@ fn our_client_creds_flow_to_pb(f: ours::ClientCredentialsOAuthFlow) -> pb::Clien
     }
 }
 
+#[cfg(feature = "server")]
 fn our_implicit_flow_to_pb(f: ours::ImplicitOAuthFlow) -> pb::ImplicitOAuthFlow {
     pb::ImplicitOAuthFlow {
         authorization_url: f.authorization_url,
@@ -570,6 +609,7 @@ fn our_implicit_flow_to_pb(f: ours::ImplicitOAuthFlow) -> pb::ImplicitOAuthFlow 
     }
 }
 
+#[cfg(feature = "server")]
 fn our_password_flow_to_pb(f: ours::PasswordOAuthFlow) -> pb::PasswordOAuthFlow {
     pb::PasswordOAuthFlow {
         token_url: f.token_url,
@@ -578,6 +618,7 @@ fn our_password_flow_to_pb(f: ours::PasswordOAuthFlow) -> pb::PasswordOAuthFlow 
     }
 }
 
+#[cfg(feature = "server")]
 fn our_device_code_flow_to_pb(f: ours::DeviceCodeOAuthFlow) -> pb::DeviceCodeOAuthFlow {
     pb::DeviceCodeOAuthFlow {
         device_authorization_url: f.device_authorization_url,
@@ -591,6 +632,7 @@ fn our_device_code_flow_to_pb(f: ours::DeviceCodeOAuthFlow) -> pb::DeviceCodeOAu
 // recommends Authorization Code + PKCE or Device Code instead), but they
 // remain part of the wire format, so this crate still passes them through.
 #[allow(deprecated)]
+#[cfg(feature = "server")]
 fn our_oauth_flows_to_pb(f: ours::OAuthFlows) -> pb::OAuthFlows {
     use pb::o_auth_flows::Flow;
     let flow = Some(match f {
@@ -609,6 +651,7 @@ fn our_oauth_flows_to_pb(f: ours::OAuthFlows) -> pb::OAuthFlows {
     pb::OAuthFlows { flow }
 }
 
+#[cfg(feature = "server")]
 fn our_oauth2_scheme_to_pb(s: ours::OAuth2SecurityScheme) -> pb::OAuth2SecurityScheme {
     pb::OAuth2SecurityScheme {
         description: s.description.unwrap_or_default(),
@@ -617,6 +660,7 @@ fn our_oauth2_scheme_to_pb(s: ours::OAuth2SecurityScheme) -> pb::OAuth2SecurityS
     }
 }
 
+#[cfg(feature = "server")]
 fn our_security_scheme_to_pb(s: ours::SecurityScheme) -> pb::SecurityScheme {
     use pb::security_scheme::Scheme;
     let scheme = Some(match s {
@@ -639,6 +683,7 @@ fn our_security_scheme_to_pb(s: ours::SecurityScheme) -> pb::SecurityScheme {
     pb::SecurityScheme { scheme }
 }
 
+#[cfg(feature = "server")]
 pub fn our_agent_card_to_pb(c: ours::AgentCard) -> pb::AgentCard {
     pb::AgentCard {
         name: c.name,
@@ -673,3 +718,431 @@ pub fn our_agent_card_to_pb(c: ours::AgentCard) -> pb::AgentCard {
         icon_url: c.icon_url,
     }
 }
+
+// ---------------------------------------------------------------------------
+// Client direction
+// ---------------------------------------------------------------------------
+//
+// The server converts requests inbound and responses outbound; a client needs
+// exactly the opposite pair. The zero-value reading described at the top of
+// this file applies in both directions: an empty string or an `*_UNSPECIFIED`
+// enum coming back from a peer means "unset", not "set to the zero value".
+
+#[cfg(feature = "client")]
+mod client_direction {
+    use super::*;
+
+    // --- requests: ours -> pb ---
+
+    fn our_send_config_to_pb(c: ours::SendMessageConfiguration) -> pb::SendMessageConfiguration {
+        pb::SendMessageConfiguration {
+            accepted_output_modes: c.accepted_output_modes,
+            task_push_notification_config: c.task_push_notification_config.map(our_push_config_to_pb),
+            history_length: c.history_length,
+            return_immediately: c.return_immediately,
+        }
+    }
+
+    pub fn our_send_message_request_to_pb(r: ours::SendMessageRequest) -> pb::SendMessageRequest {
+        pb::SendMessageRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            message: Some(our_message_to_pb(r.message)),
+            configuration: r.configuration.map(our_send_config_to_pb),
+            metadata: r.metadata.map(json_to_struct),
+        }
+    }
+
+    pub fn our_get_task_request_to_pb(r: ours::GetTaskRequest) -> pb::GetTaskRequest {
+        pb::GetTaskRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            id: r.id,
+            history_length: r.history_length,
+        }
+    }
+
+    pub fn our_list_tasks_request_to_pb(r: ours::ListTasksRequest) -> pb::ListTasksRequest {
+        pb::ListTasksRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            context_id: r.context_id.unwrap_or_default(),
+            // `None` is the unspecified enum, which is how the server reads
+            // "no status filter".
+            status: r.status.map(|s| our_task_state_to_pb(s) as i32).unwrap_or(0),
+            page_size: r.page_size,
+            page_token: r.page_token.unwrap_or_default(),
+            history_length: r.history_length,
+            status_timestamp_after: r.status_timestamp_after.map(chrono_to_timestamp),
+            include_artifacts: r.include_artifacts,
+        }
+    }
+
+    pub fn our_cancel_task_request_to_pb(r: ours::CancelTaskRequest) -> pb::CancelTaskRequest {
+        pb::CancelTaskRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            id: r.id,
+            metadata: r.metadata.map(json_to_struct),
+        }
+    }
+
+    pub fn our_subscribe_request_to_pb(r: ours::SubscribeToTaskRequest) -> pb::SubscribeToTaskRequest {
+        pb::SubscribeToTaskRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            id: r.id,
+        }
+    }
+
+    pub fn our_get_push_config_request_to_pb(
+        r: ours::GetTaskPushNotificationConfigRequest,
+    ) -> pb::GetTaskPushNotificationConfigRequest {
+        pb::GetTaskPushNotificationConfigRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            task_id: r.task_id,
+            id: r.id,
+        }
+    }
+
+    pub fn our_delete_push_config_request_to_pb(
+        r: ours::DeleteTaskPushNotificationConfigRequest,
+    ) -> pb::DeleteTaskPushNotificationConfigRequest {
+        pb::DeleteTaskPushNotificationConfigRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            task_id: r.task_id,
+            id: r.id,
+        }
+    }
+
+    pub fn our_list_push_configs_request_to_pb(
+        r: ours::ListTaskPushNotificationConfigsRequest,
+    ) -> pb::ListTaskPushNotificationConfigsRequest {
+        pb::ListTaskPushNotificationConfigsRequest {
+            tenant: r.tenant.unwrap_or_default(),
+            task_id: r.task_id,
+            page_size: r.page_size.unwrap_or(0),
+            page_token: r.page_token.unwrap_or_default(),
+        }
+    }
+
+    // --- responses: pb -> ours ---
+
+    fn pb_task_status_to_ours(s: pb::TaskStatus) -> Result<ours::TaskStatus, Status> {
+        Ok(ours::TaskStatus {
+            state: pb_task_state_to_ours(s.state),
+            message: s.message.map(pb_message_to_ours).transpose()?,
+            timestamp: s.timestamp.and_then(timestamp_to_chrono),
+        })
+    }
+
+    fn pb_artifact_to_ours(a: pb::Artifact) -> Result<ours::Artifact, Status> {
+        Ok(ours::Artifact {
+            artifact_id: a.artifact_id,
+            name: non_empty(a.name),
+            description: non_empty(a.description),
+            parts: a
+                .parts
+                .into_iter()
+                .map(pb_part_to_ours)
+                .collect::<Result<_, _>>()?,
+            metadata: a.metadata.map(struct_to_json),
+            extensions: a.extensions,
+        })
+    }
+
+    pub fn pb_task_to_ours(t: pb::Task) -> Result<ours::Task, Status> {
+        let status = t
+            .status
+            .ok_or_else(|| Status::internal("task is missing its status"))?;
+        Ok(ours::Task {
+            id: t.id,
+            context_id: non_empty(t.context_id),
+            status: pb_task_status_to_ours(status)?,
+            artifacts: t
+                .artifacts
+                .into_iter()
+                .map(pb_artifact_to_ours)
+                .collect::<Result<_, _>>()?,
+            history: t
+                .history
+                .into_iter()
+                .map(pb_message_to_ours)
+                .collect::<Result<_, _>>()?,
+            metadata: t.metadata.map(struct_to_json),
+        })
+    }
+
+    fn pb_status_update_to_ours(e: pb::TaskStatusUpdateEvent) -> Result<ours::TaskStatusUpdateEvent, Status> {
+        let status = e
+            .status
+            .ok_or_else(|| Status::internal("status update is missing its status"))?;
+        Ok(ours::TaskStatusUpdateEvent {
+            task_id: e.task_id,
+            context_id: e.context_id,
+            status: pb_task_status_to_ours(status)?,
+            metadata: e.metadata.map(struct_to_json),
+        })
+    }
+
+    fn pb_artifact_update_to_ours(
+        e: pb::TaskArtifactUpdateEvent,
+    ) -> Result<ours::TaskArtifactUpdateEvent, Status> {
+        let artifact = e
+            .artifact
+            .ok_or_else(|| Status::internal("artifact update is missing its artifact"))?;
+        Ok(ours::TaskArtifactUpdateEvent {
+            task_id: e.task_id,
+            context_id: e.context_id,
+            artifact: pb_artifact_to_ours(artifact)?,
+            append: e.append,
+            last_chunk: e.last_chunk,
+            metadata: e.metadata.map(struct_to_json),
+        })
+    }
+
+    pub fn pb_stream_response_to_ours(r: pb::StreamResponse) -> Result<ours::StreamResponse, Status> {
+        use pb::stream_response::Payload;
+        match r.payload {
+            Some(Payload::Task(t)) => Ok(ours::StreamResponse::Task {
+                task: pb_task_to_ours(t)?,
+            }),
+            Some(Payload::Message(m)) => Ok(ours::StreamResponse::Message {
+                message: pb_message_to_ours(m)?,
+            }),
+            Some(Payload::StatusUpdate(e)) => Ok(ours::StreamResponse::StatusUpdate {
+                status_update: pb_status_update_to_ours(e)?,
+            }),
+            Some(Payload::ArtifactUpdate(e)) => Ok(ours::StreamResponse::ArtifactUpdate {
+                artifact_update: pb_artifact_update_to_ours(e)?,
+            }),
+            // A `oneof` with nothing set is not a shape the spec defines, and
+            // guessing a variant would invent an event that never happened.
+            None => Err(Status::internal("stream response carried no payload")),
+        }
+    }
+
+    pub fn pb_send_response_to_ours(r: pb::SendMessageResponse) -> Result<ours::SendMessageResult, Status> {
+        use pb::send_message_response::Payload;
+        match r.payload {
+            Some(Payload::Task(t)) => Ok(ours::SendMessageResult::Task {
+                task: pb_task_to_ours(t)?,
+            }),
+            Some(Payload::Message(m)) => Ok(ours::SendMessageResult::Message {
+                message: pb_message_to_ours(m)?,
+            }),
+            None => Err(Status::internal("send response carried no payload")),
+        }
+    }
+
+    pub fn pb_list_tasks_response_to_ours(
+        r: pb::ListTasksResponse,
+    ) -> Result<ours::ListTasksResponse, Status> {
+        Ok(ours::ListTasksResponse {
+            tasks: r
+                .tasks
+                .into_iter()
+                .map(pb_task_to_ours)
+                .collect::<Result<_, _>>()?,
+            next_page_token: r.next_page_token,
+            page_size: r.page_size,
+            total_size: r.total_size,
+        })
+    }
+
+    pub fn pb_list_push_configs_response_to_ours(
+        r: pb::ListTaskPushNotificationConfigsResponse,
+    ) -> ours::ListTaskPushNotificationConfigsResponse {
+        ours::ListTaskPushNotificationConfigsResponse {
+            configs: r.configs.into_iter().map(pb_push_config_to_ours).collect(),
+            next_page_token: r.next_page_token,
+        }
+    }
+
+    // --- AgentCard: pb -> ours, for GetExtendedAgentCard ---
+
+    fn pb_agent_interface_to_ours(i: pb::AgentInterface) -> ours::AgentInterface {
+        ours::AgentInterface {
+            url: i.url,
+            protocol_binding: i.protocol_binding,
+            tenant: non_empty(i.tenant),
+            protocol_version: i.protocol_version,
+        }
+    }
+
+    fn pb_agent_extension_to_ours(e: pb::AgentExtension) -> ours::AgentExtension {
+        ours::AgentExtension {
+            uri: e.uri,
+            description: e.description,
+            required: e.required,
+            params: e.params.map(struct_to_json),
+        }
+    }
+
+    fn pb_agent_capabilities_to_ours(c: pb::AgentCapabilities) -> ours::AgentCapabilities {
+        ours::AgentCapabilities {
+            streaming: c.streaming,
+            push_notifications: c.push_notifications,
+            extensions: c.extensions.into_iter().map(pb_agent_extension_to_ours).collect(),
+            extended_agent_card: c.extended_agent_card,
+        }
+    }
+
+    fn pb_security_requirement_to_ours(s: pb::SecurityRequirement) -> ours::SecurityRequirement {
+        ours::SecurityRequirement {
+            schemes: s
+                .schemes
+                .into_iter()
+                .map(|(k, v)| (k, ours::StringList { list: v.list }))
+                .collect(),
+        }
+    }
+
+    fn pb_agent_skill_to_ours(s: pb::AgentSkill) -> ours::AgentSkill {
+        ours::AgentSkill {
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            tags: s.tags,
+            examples: s.examples,
+            input_modes: s.input_modes,
+            output_modes: s.output_modes,
+            security_requirements: s
+                .security_requirements
+                .into_iter()
+                .map(pb_security_requirement_to_ours)
+                .collect(),
+        }
+    }
+
+    #[allow(deprecated)] // the proto deprecates two flows; a client still has to read them
+    fn pb_oauth_flows_to_ours(f: pb::OAuthFlows) -> Option<ours::OAuthFlows> {
+        use pb::o_auth_flows::Flow;
+        Some(match f.flow? {
+            Flow::AuthorizationCode(f) => ours::OAuthFlows::AuthorizationCode {
+                authorization_code: ours::AuthorizationCodeOAuthFlow {
+                    authorization_url: f.authorization_url,
+                    token_url: f.token_url,
+                    refresh_url: non_empty(f.refresh_url),
+                    scopes: f.scopes,
+                    pkce_required: f.pkce_required,
+                },
+            },
+            Flow::ClientCredentials(f) => ours::OAuthFlows::ClientCredentials {
+                client_credentials: ours::ClientCredentialsOAuthFlow {
+                    token_url: f.token_url,
+                    refresh_url: non_empty(f.refresh_url),
+                    scopes: f.scopes,
+                },
+            },
+            Flow::Implicit(f) => ours::OAuthFlows::Implicit {
+                implicit: ours::ImplicitOAuthFlow {
+                    authorization_url: f.authorization_url,
+                    refresh_url: non_empty(f.refresh_url),
+                    scopes: f.scopes,
+                },
+            },
+            Flow::Password(f) => ours::OAuthFlows::Password {
+                password: ours::PasswordOAuthFlow {
+                    token_url: f.token_url,
+                    refresh_url: non_empty(f.refresh_url),
+                    scopes: f.scopes,
+                },
+            },
+            Flow::DeviceCode(f) => ours::OAuthFlows::DeviceCode {
+                device_code: ours::DeviceCodeOAuthFlow {
+                    device_authorization_url: f.device_authorization_url,
+                    token_url: f.token_url,
+                    refresh_url: non_empty(f.refresh_url),
+                    scopes: f.scopes,
+                },
+            },
+        })
+    }
+
+    /// Returns `None` for a scheme whose `oneof` is unset, or an OAuth2
+    /// scheme with no flow: both are shapes the spec does not define, and a
+    /// caller is better served by the scheme being absent than by an invented
+    /// one it might then try to satisfy.
+    fn pb_security_scheme_to_ours(s: pb::SecurityScheme) -> Option<ours::SecurityScheme> {
+        use pb::security_scheme::Scheme;
+        Some(match s.scheme? {
+            Scheme::ApiKeySecurityScheme(s) => ours::SecurityScheme::ApiKey {
+                api_key_security_scheme: ours::ApiKeySecurityScheme {
+                    description: non_empty(s.description),
+                    location: s.location,
+                    name: s.name,
+                },
+            },
+            Scheme::HttpAuthSecurityScheme(s) => ours::SecurityScheme::HttpAuth {
+                http_auth_security_scheme: ours::HttpAuthSecurityScheme {
+                    description: non_empty(s.description),
+                    scheme: s.scheme,
+                    bearer_format: non_empty(s.bearer_format),
+                },
+            },
+            Scheme::Oauth2SecurityScheme(s) => ours::SecurityScheme::OAuth2 {
+                oauth2_security_scheme: ours::OAuth2SecurityScheme {
+                    description: non_empty(s.description),
+                    flows: pb_oauth_flows_to_ours(s.flows?)?,
+                    oauth2_metadata_url: non_empty(s.oauth2_metadata_url),
+                },
+            },
+            Scheme::OpenIdConnectSecurityScheme(s) => ours::SecurityScheme::OpenIdConnect {
+                open_id_connect_security_scheme: ours::OpenIdConnectSecurityScheme {
+                    description: non_empty(s.description),
+                    open_id_connect_url: s.open_id_connect_url,
+                },
+            },
+            Scheme::MtlsSecurityScheme(s) => ours::SecurityScheme::MutualTls {
+                mtls_security_scheme: ours::MutualTlsSecurityScheme {
+                    description: non_empty(s.description),
+                },
+            },
+        })
+    }
+
+    pub fn pb_agent_card_to_ours(c: pb::AgentCard) -> Result<ours::AgentCard, Status> {
+        let capabilities = c
+            .capabilities
+            .map(pb_agent_capabilities_to_ours)
+            .unwrap_or_default();
+        Ok(ours::AgentCard {
+            name: c.name,
+            description: c.description,
+            supported_interfaces: c
+                .supported_interfaces
+                .into_iter()
+                .map(pb_agent_interface_to_ours)
+                .collect(),
+            provider: c.provider.map(|p| ours::AgentProvider {
+                url: p.url,
+                organization: p.organization,
+            }),
+            version: c.version,
+            documentation_url: c.documentation_url.and_then(non_empty),
+            capabilities,
+            security_schemes: c
+                .security_schemes
+                .into_iter()
+                .filter_map(|(k, v)| pb_security_scheme_to_ours(v).map(|s| (k, s)))
+                .collect(),
+            security_requirements: c
+                .security_requirements
+                .into_iter()
+                .map(pb_security_requirement_to_ours)
+                .collect(),
+            default_input_modes: c.default_input_modes,
+            default_output_modes: c.default_output_modes,
+            skills: c.skills.into_iter().map(pb_agent_skill_to_ours).collect(),
+            signatures: c
+                .signatures
+                .into_iter()
+                .map(|s| ours::AgentCardSignature {
+                    protected: s.protected,
+                    signature: s.signature,
+                    header: s.header.map(struct_to_json),
+                })
+                .collect(),
+            icon_url: c.icon_url.and_then(non_empty),
+        })
+    }
+}
+
+#[cfg(feature = "client")]
+pub(crate) use client_direction::*;

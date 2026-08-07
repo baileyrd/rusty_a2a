@@ -34,6 +34,8 @@
 pub mod client;
 mod codec;
 pub mod error;
+#[cfg(feature = "grpc")]
+pub mod grpc;
 #[cfg(feature = "server")]
 pub mod server;
 #[cfg(feature = "signing")]
